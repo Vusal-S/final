@@ -20,7 +20,41 @@ double Si(double (*f)(double), double a, double b)
 	return ((b - a) / 12.0) * (f(a) + 5 * f((a + b) / 2.0 - (b - a) / (2.0 * sqrt(5.0))) + 5 * f((a + b) / 2.0 + (b - a) / (2.0 * sqrt(5.0))) + f(b));
 }
 
-double Integrate(double (*f)(double), double *a, double A, double eps, double *Rg, double *Rs, int *kol, double *h)
+double Integrate2(double (*f)(double), double a, double b, double eps)
+{
+    double I = 0,  h = 0.1, s1, s2, delta, xi;
+    
+    while (a < b)
+    {
+        s1 = Si(f, a, a + h);
+        s2 = Si(f, a, a + h / 2.0) + Si(f, a + h / 2.0, a + h);
+        
+        delta = (s2 - s1) / 63.0;
+
+        if (fabs(delta) < eps)
+        {
+            if (a + h > b)
+            {
+            	h = b - a;
+            	I += Si(f, a, a + h / 2.0) + Si(f, a + h / 2.0, a + h);
+     	       a += h;
+            }
+            
+            I += s2;
+            a += h;
+        }
+        
+        xi = pow(fabs(delta)/eps, 1.0/7.0);
+        if (xi > 10.0) xi = 10.0;
+        if (xi < 0.1) xi = 0.1;
+        
+        h = 0.95 * h / xi;
+    }
+    
+    return I;
+}
+
+double Integrate1(double (*f)(double), double *a, double A, double eps, double *Rg, double *Rs, int *kol, double *h)
 {
 	double I = 0, s1, s2, delta, xi, h_new = 0.1;
 
@@ -57,7 +91,7 @@ double Integrate(double (*f)(double), double *a, double A, double eps, double *R
 
 double I2(double (*f)(double), double a, double h, double I, double A)
 {
-	return (I + Si(f, a, a + h / 2.0) + Si(f, a + h / 2.0, a + h)) - A;
+	return (I + Si(f, a, a + h  /  2.0) + Si(f, a + h  /  2.0, a + h)) - A;
 }
 
 int root_chords(double *x, double a, double h, double (*I2)(double (*)(double), double, double, double, double), double eps, double I, double A)
@@ -96,37 +130,39 @@ int root_chords(double *x, double a, double h, double (*I2)(double (*)(double), 
 
 int main()
 {
-	double R, Rg, Rs, I[3], eps[3] = {1e-7, 1e-9, 1e-11},  h, s1, s2, delta;
+	double R, Rg, Rs, I[3], eps[3] = {1e-11, 1e-9, 1e-7},  h, s1, s2, delta;
 	double x_min, x_max, x, eps2 = 1e-12;
 
-	double a, A = 100;
+	double a, A = 1000;
 	int kolI, kolX;
+		
+	I[0] = Integrate1(f, &a, A, eps[0], &Rg, &Rs, &kolI, &h);
+	
+	kolX = root_chords(&x, a, h, I2, eps2, I[0], A);
+	
+	
+	s1 = Si(f, a, x);
+	s2 = Si(f, a, (a + x) / 2.0) + Si(f, (a + x) / 2.0, x);
+	
+	delta = (s2 - s1) / 63.0;
+	
+	Rg += fabs(delta);		Rs += delta;		Rs = fabs(Rs);
+	
+	I[2] += s2;
+	
+	x_min = x - (I[0] - A) / f(x) - Rg / f(x);
+	x_max = x - (I[0] - A) / f(x) + Rg / f(x);
+	
+	printf("Rs = %g		Rg = %g\n", Rs, Rg);
+	printf("I = %g\nkolX = %d\nkolI = %d\nx = %g\n", I[0], kolX, kolI, x * x * x);
+	printf("x_min = %g		x_max = %g\n\n", pow(x_min, 3), pow(x_max, 3));
+	//printf("%g		%g\n\n", pow(x, 3) - pow(x_min, 3), pow(x_max, 3) - pow(x, 3));
+	
+	
 	
 	for(int i = 0; i < 3; i++)
 	{
-		a = 0; Rg = 0; Rs = 0; kolI = 0; kolX = 0;
-		
-		I[i] = Integrate(f, &a, A, eps[i], &Rg, &Rs, &kolI, &h);
-	
-		kolX = root_chords(&x, a, h, I2, eps2, I[i], A);
-	
-	
-		s1 = Si(f, a, x);
-		s2 = Si(f, a, (a + x) / 2.0) + Si(f, (a + x) / 2.0, x);
-	
-		delta = (s2 - s1) / 63.0;
-	
-		Rg += fabs(delta);		Rs += delta;		Rs = fabs(Rs);
-	
-		I[i] += s2;
-	
-		x_min = x - (I[i] - A) / f(x) - Rg / f(x);
-		x_max = x - (I[i] - A) / f(x) + Rg / f(x);
-	
-		printf("Rs = %g		Rg = %g\n", Rs, Rg);
-		printf("I = %g\nkolX = %d\nkolI = %d\nx = %g\n", I[i], kolX, kolI, x * x * x);
-		printf("x_min = %g		x_max = %g\n\n", pow(x_min, 3), pow(x_max, 3));
-		//printf("%g		%g\n\n", pow(x, 3) - pow(x_min, 3), pow(x_max, 3) - pow(x, 3));
+		I[i] = Integrate2(f, 0, x, eps[i]);
 	}
 	
 	R = (I[0] - I[1]) / (I[1] - I[2]);
