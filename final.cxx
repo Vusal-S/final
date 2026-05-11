@@ -3,9 +3,17 @@
 
 double f(double x)
 {
-	// (sin(t) + 1) / pow(x, 1.0/3.0)
+	// (sin(x) + 1) / pow(x, 1.0/3.0);
 	
 	return 3.0 * x * (sin(x * x * x) + 1);
+	
+	//return 0.5* log(1.0 + x*x);
+	
+	//return atan(x*(x*x+1)/(sqrt(x*x*x*x+1)));
+	
+	//return 2.0 * (sin(x*x) + 1);
+	
+	//return log(pow(1 + pow(x,4), 1.0 / 3.0));
 }
 
 int sign(double x)
@@ -38,6 +46,7 @@ double Integrate2(double (*f)(double), double a, double b, double eps)
             	h = b - a;
             	I += Si(f, a, a + h / 2.0) + Si(f, a + h / 2.0, a + h);
      	       a += h;
+     	       return I;
             }
             
             I += s2;
@@ -57,7 +66,7 @@ double Integrate2(double (*f)(double), double a, double b, double eps)
 double Integrate1(double (*f)(double), double *a, double A, double eps, double *Rg, double *Rs, int *kol, double *h)
 {
 	double I = 0, s1, s2, delta, xi, h_new = 0.1;
-
+	
 	while (I < A)
 	{
 		*h = h_new;
@@ -130,35 +139,48 @@ int root_chords(double *x, double a, double h, double (*I2)(double (*)(double), 
 
 int main()
 {
-	double R, Rg, Rs, I[3], eps[3] = {1e-11, 1e-9, 1e-7},  h, s1, s2, delta;
+	double R, Rg, Rs, I[3], eps[3] = {1e-7, 1e-9, 1e-11},  h, s1, s2, delta;
 	double x_min, x_max, x, eps2 = 1e-12;
 
-	double a, A = 1000;
-	int kolI, kolX;
+	double a = 0, A;
+	int kolI = 0, kolX;
+	
+	scanf("%lf", &A);
+	
+	if(A < 0) {printf("alpha < 0"); return 1;}
+	
+	for(int i = 0; i < 3; i++)
+	{
+		Rs = 0; Rg = 0; kolI = 0; a = 0;
 		
-	I[0] = Integrate1(f, &a, A, eps[0], &Rg, &Rs, &kolI, &h);
+		I[i] = Integrate1(f, &a, A, eps[i], &Rg, &Rs, &kolI, &h);
 	
-	kolX = root_chords(&x, a, h, I2, eps2, I[0], A);
-	
-	
-	s1 = Si(f, a, x);
-	s2 = Si(f, a, (a + x) / 2.0) + Si(f, (a + x) / 2.0, x);
-	
-	delta = (s2 - s1) / 63.0;
-	
-	Rg += fabs(delta);		Rs += delta;		Rs = fabs(Rs);
-	
-	I[2] += s2;
-	
-	x_min = x - (I[0] - A) / f(x) - Rg / f(x);
-	x_max = x - (I[0] - A) / f(x) + Rg / f(x);
-	
-	printf("Rs = %g		Rg = %g\n", Rs, Rg);
-	printf("I = %g\nkolX = %d\nkolI = %d\nx = %g\n", I[0], kolX, kolI, x * x * x);
-	printf("x_min = %g		x_max = %g\n\n", pow(x_min, 3), pow(x_max, 3));
-	//printf("%g		%g\n\n", pow(x, 3) - pow(x_min, 3), pow(x_max, 3) - pow(x, 3));
+		kolX = root_chords(&x, a, h, I2, eps2, I[i], A);
 	
 	
+		s1 = Si(f, a, x);
+		s2 = Si(f, a, (a + x) / 2.0) + Si(f, (a + x) / 2.0, x);
+	
+		delta = (s2 - s1) / 63.0;
+	
+		Rg += fabs(delta);		Rs += delta;		Rs = fabs(Rs);
+	
+		I[i] += s2;
+	
+		x_min = x - (I[i] - A) / f(x) - Rg / f(x);
+		x_max = x - (I[i] - A) / f(x) + Rg / f(x);
+		
+		printf(" eps = %g:\n\n", eps[i]);
+		printf(" Integral = %g\n x = %.6lf\n", I[i], x*x*x);
+	
+		printf(" x_min = %.6lf\n x_max = %.6lf\n", pow(x_min, 3), pow(x_max, 3));
+	
+		printf(" кол. итераций в методе хорд = %d\n кол. итераций в интегр. = %d\n",  kolX, kolI);
+	
+		printf(" Сред. погр. = %e\n Гаран. погр. = %e\n\n\n", Rs, Rg);
+	
+		//printf("%g		%g\n\n", pow(x, 3) - pow(x_min, 3), pow(x_max, 3) - pow(x, 3));
+	}
 	
 	for(int i = 0; i < 3; i++)
 	{
@@ -167,7 +189,7 @@ int main()
 	
 	R = (I[0] - I[1]) / (I[1] - I[2]);
 	
-	printf("R = %g", R);
+	printf(" коэф. сход. = %g\n", R);
 	
 	return 0;
 }
