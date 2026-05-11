@@ -6,14 +6,6 @@ double f(double x)
 	// (sin(x) + 1) / pow(x, 1.0/3.0);
 	
 	return 3.0 * x * (sin(x * x * x) + 1);
-	
-	//return 0.5* log(1.0 + x*x);
-	
-	//return atan(x*(x*x+1)/(sqrt(x*x*x*x+1)));
-	
-	//return 2.0 * (sin(x*x) + 1);
-	
-	//return log(pow(1 + pow(x,4), 1.0 / 3.0));
 }
 
 int sign(double x)
