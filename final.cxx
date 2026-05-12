@@ -131,7 +131,7 @@ int root_chords(double *x, double a, double h, double (*I2)(double (*)(double), 
 
 int main()
 {
-	double R, Rg, Rs, I[3], eps[3] = {1e-7, 1e-9, 1e-11},  h, s1, s2, delta;
+	double Rg, Rs, I[3], eps[3] = {1e-7, 1e-9, 1e-11},  h, s1, s2, delta;
 	double x_min, x_max, x, eps2 = 1e-12;
 
 	double a = 0, A;
@@ -170,18 +170,6 @@ int main()
 		printf(" кол. итераций в методе хорд = %d\n кол. итераций в интегр. = %d\n",  kolX, kolI);
 	
 		printf(" Сред. погр. = %e\n Гаран. погр. = %e\n\n\n", Rs, Rg);
-	
-		//printf("%g		%g\n\n", pow(x, 3) - pow(x_min, 3), pow(x_max, 3) - pow(x, 3));
 	}
-	
-	for(int i = 0; i < 3; i++)
-	{
-		I[i] = Integrate2(f, 0, x, eps[i]);
-	}
-	
-	R = (I[0] - I[1]) / (I[1] - I[2]);
-	
-	printf(" коэф. сход. = %g\n", R);
-	
 	return 0;
 }
